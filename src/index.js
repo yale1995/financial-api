@@ -8,32 +8,35 @@ app.use(express.json());
 const customers = [];
 
 app.post("/account", (request, response) => {
-    const { cpf, name } = request.body;
+  const { cpf, name } = request.body;
 
-    console.log(request)
+  const customerAlreadyExists = customers.some(
+    (customer) => customer.cpf === cpf
+  );
 
-    const customerAlreadyExists = customers.some((customer) => customer.cpf === cpf);
+  if (customerAlreadyExists) {
+    return response.status(400).json({ error: "Customer already exists!" });
+  }
 
-    if( customerAlreadyExists ) {
-        return response.status(400).json({ error: "Customer already exists!" });
-    }
-
-    customers.push({
-        cpf,
-        name,
-        id: uuidv4(),
-        statement: [],
-    });
-    return response.status(201).json({requestBody: request.body})
+  customers.push({
+    cpf,
+    name,
+    id: uuidv4(),
+    statement: [],
+  });
+  return response.status(201).json({ status: "success" });
 });
 
-app.get("/statement/:cpf", (request, response) => {
-    const { cpf } = request.params;
-    
-    const customer = customers.find((customer) => customer.cpf === cpf);
+app.get("/statement", (request, response) => {
+  const { cpf } = request.headers;
 
-    return response.json(customer.statement);
+  const customer = customers.find((customer) => customer.cpf == cpf);
 
-})
+  if(!customer) {
+    return response.status(400).json({status: 'error', message: 'Customer not found'})
+  }
 
-app.listen(3000)
+  return response.json(customer.statement);
+});
+
+app.listen(3000);
